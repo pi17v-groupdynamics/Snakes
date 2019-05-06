@@ -59,7 +59,7 @@ int main()
 		}
 	}
 	//generate apples
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 15; i++) {
 		generateApple(tiles);
 	}
 	srand(time(0));
@@ -116,6 +116,7 @@ int main()
 		tile_draw.setPosition({ snake.head.first*16.0f, snake.head.second*16.0f });
 		window.draw(tile_draw);
 		for (auto coord : snake.tail) {
+			tile_draw.setFillColor(sf::Color(46, 176, 253));
 			tile_draw.setPosition({ coord.first*16.0f, coord.second*16.0f });
 			window.draw(tile_draw);
 		}
@@ -124,6 +125,7 @@ int main()
 		tile_draw.setPosition({ snake2.head.first*16.0f, snake2.head.second*16.0f });
 		window.draw(tile_draw);
 		for (auto coord : snake2.tail) {
+			tile_draw.setFillColor(sf::Color(42, 42, 114));
 			tile_draw.setPosition({ coord.first*16.0f, coord.second*16.0f });
 			window.draw(tile_draw);
 		}
@@ -134,11 +136,35 @@ int main()
 		elapsed += clock.getElapsedTime().asMilliseconds();
 		if (elapsed >= 4400) {
 			switch(NextMove(tiles, snake)) {
+			case tile::block:
+				break;
+			case tile::none:
 				snake.move();
+				break;
+			case tile::fruit:
+				snake.move();
+				tiles[snake.head.second][snake.head.first] = none;
+				snake.tail.push_back(snake.tail[snake.tail.size() - 1]);
+				generateApple(tiles);
+				break;
+			default:
+				break;
 			}
-
-			switch(NextMove(tiles, snake2)) {
+			//длина 12 -> обрезать до 5 -> добавить в счёт
+			switch (NextMove(tiles, snake2)) {
+			case tile::block:
+				break;
+			case tile::none:
 				snake2.move();
+				break;
+			case tile::fruit:
+				snake2.move();
+				tiles[snake2.head.second][snake2.head.first] = none;
+				snake2.tail.push_back(snake2.tail[snake2.tail.size() - 1]);
+				generateApple(tiles);
+				break;
+			default:
+				break;
 			}
 
 			clock.restart();

@@ -1,15 +1,6 @@
 #include "Snake.h"
 #include <SFML/Graphics.hpp>
 
-template <typename T>
-std::pair<T, T> clamp(std::pair<T, T> p, T min, T max) {
-	auto x = p.first > max ? min : p.first;
-	x = p.first < min ? max : p.first;
-	auto y = p.second > max ? min : p.second;
-	y = p.second < min ? max : p.second;
-	return { x, y };
-}
-
 int Snake::handleInput()
 {
 	if (id == 1) {
@@ -65,7 +56,6 @@ void Snake::move()
 	else if (head.second < 0)
 		head.second = 31;
 	
-	head = clamp<int>(head, 0, 31);
 	std::rotate(tail.rbegin(), tail.rbegin() +1, tail.rend());
 }
 
