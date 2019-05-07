@@ -3,9 +3,11 @@
 #include "Snake.h"
 enum tile { none = 0, snake, snake2, fruit, block };
 
+int countApplesMap = 0;
 void generateApple(tile tiles[32][32]) {
 	int x;
 	int y;
+	countApplesMap++;
 	try_again:
 	x = rand() % 32;
 	y = rand() % 32;
@@ -14,7 +16,7 @@ void generateApple(tile tiles[32][32]) {
 	else goto try_again;
 }
 
-tile NextMove(tile tiles[32][32], Snake& snake) {
+tile NextMove(tile tiles[32][32], Snake& snake, Snake& other_snake) {
 	auto dir = snake.dir;
 	auto head = snake.head;
 	if (dir == Snake::direction::left) head.first -= 1;
@@ -26,9 +28,25 @@ tile NextMove(tile tiles[32][32], Snake& snake) {
 	else if (head.first < 0) head.first = 31;
 	else if (head.second > 31) head.second = 0;
 	else if (head.second < 0) head.second = 31;
-	if (tiles[head.second][head.first] == block)
-		return tiles[head.second][head.first];
-		
+
+	//point, index
+	std::vector<std::pair<std::pair<int, int>, int>> points;
+	int i = 0;
+	for (auto point : other_snake.tail) {
+		if (head.first == point.first && head.second == point.second) {
+			points.push_back({ point, i });
+		}
+		i++;
+	}
+	for (auto point : points) {
+		if (point.second > 3) {
+			std::vector<std::pair<int, int>>(other_snake.tail.begin(), other_snake.tail.begin() + point.second).swap(other_snake.tail);
+			for (int i = 0; i < point.second; i++) {
+				generateApple(tiles);
+			}
+		}
+	}
+
 	return tiles[head.second][head.first];
 }
 
@@ -59,7 +77,7 @@ int main()
 		}
 	}
 	//generate apples
-	for (int i = 0; i < 15; i++) {
+	for (int i = 0; i < 20; i++) {
 		generateApple(tiles);
 	}
 	srand(time(0));
@@ -135,7 +153,7 @@ int main()
 
 		elapsed += clock.getElapsedTime().asMilliseconds();
 		if (elapsed >= 4400) {
-			switch(NextMove(tiles, snake)) {
+			switch(NextMove(tiles, snake, snake2)) {
 			case tile::block:
 				break;
 			case tile::none:
@@ -145,13 +163,18 @@ int main()
 				snake.move();
 				tiles[snake.head.second][snake.head.first] = none;
 				snake.tail.push_back(snake.tail[snake.tail.size() - 1]);
-				generateApple(tiles);
+				if(snake.tail.size()==14)
+					std::vector<std::pair<int,int>>(snake.tail.begin(), snake.tail.begin() + 4).swap(snake.tail);
+				countApplesMap--;
+
+				if(countApplesMap<=20)
+					generateApple(tiles);
 				break;
 			default:
 				break;
 			}
-			//длина 12 -> обрезать до 5 -> добавить в счёт
-			switch (NextMove(tiles, snake2)) {
+			//длина 15 -> обрезать до 5 -> добавить в счёт
+			switch (NextMove(tiles, snake2, snake)) {
 			case tile::block:
 				break;
 			case tile::none:
@@ -161,7 +184,11 @@ int main()
 				snake2.move();
 				tiles[snake2.head.second][snake2.head.first] = none;
 				snake2.tail.push_back(snake2.tail[snake2.tail.size() - 1]);
-				generateApple(tiles);
+				if (snake2.tail.size() == 14)
+					std::vector<std::pair<int, int>>(snake2.tail.begin(), snake2.tail.begin() + 4).swap(snake2.tail);
+				countApplesMap--;
+				if (countApplesMap <= 20)
+					generateApple(tiles);
 				break;
 			default:
 				break;
@@ -170,12 +197,7 @@ int main()
 			clock.restart();
 			elapsed = 0;
 		}
-
-		
-		
 		window.display();
-
 	}
-
 	return 0;
 }
