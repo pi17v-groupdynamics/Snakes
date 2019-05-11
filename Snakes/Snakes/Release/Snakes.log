@@ -1,0 +1,8 @@
+﻿  main.cpp
+c:\users\xxx\desktop\hub\проекты\snakes\snakes\snakes\main.cpp(130): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+  Создание кода
+  1 of 314 functions ( 0.3%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Создание кода завершено
+  Snakes.vcxproj -> C:\Users\xxx\Desktop\Hub\проекты\Snakes\Snakes\Release\Snakes.exe

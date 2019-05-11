@@ -1,18 +1,34 @@
 #include <SFML/Graphics.hpp>
 #include "windows.h"
 #include "Snake.h"
-enum tile { none = 0, snake, snake2, fruit, block };
+enum tile { none = 0, snake, snake2, fruit, block, god_apple, devil_apple };
 
 int countApplesMap = 0;
+int CountBadApples = 0;
 void generateApple(tile tiles[32][32]) {
 	int x;
 	int y;
-	countApplesMap++;
 	try_again:
 	x = rand() % 32;
 	y = rand() % 32;
-	if (tiles[y][x] == none)
+	if (tiles[y][x] == none) {
+		int random = rand() % 100;
 		tiles[y][x] = fruit;
+		countApplesMap++;
+
+		if (random < 45 && CountBadApples<20) {
+			tiles[y][x] = devil_apple;
+			countApplesMap--;
+			CountBadApples++;
+			generateApple(tiles);
+		}
+		//else generateApple(tiles);
+		if (random < 15) {
+			tiles[y][x] = god_apple;
+			countApplesMap--;
+		}
+
+	}
 	else goto try_again;
 }
 
@@ -54,9 +70,40 @@ int main()
 {
 	ShowWindow(GetConsoleWindow(), 0);
 
-	sf::RenderWindow window(sf::VideoMode(800, 600), "title");
+	int player1score = 0;
+	int player2score = 0;
+	int goal = 100;
 
+	sf::RenderWindow window(sf::VideoMode(800, 600), "Snakes");
+	////512x75
+	sf::RectangleShape scoreBoardBackground;
+	scoreBoardBackground.setFillColor(sf::Color::White);
+	scoreBoardBackground.setSize({ 512, 77 });
+	scoreBoardBackground.setPosition(0, 600-75 - 2);
 	
+	sf::Font font;
+	font.loadFromFile("arial.ttf");
+
+	sf::Texture texture;
+	texture.loadFromFile("andermirik.jpg");
+	sf::Sprite image;
+	image.setTexture(texture);
+	image.setPosition(800 - 278, 0);
+
+
+	sf::Text text("player 1: 0", font, 20);
+	text.setFillColor(sf::Color(46, 176, 253));
+	text.setPosition(0 + 15, 600-77+10);
+
+	sf::Text text2("player 2: 0", font, 20);
+	text2.setFillColor(sf::Color(42, 42, 114));
+	text2.setPosition(0 + 15, 600-77+10 + 30);
+
+	sf::Text text_goal("goal:"+std::to_string(goal), font, 20);
+	text_goal.setFillColor(sf::Color(0,0,0));
+	text_goal.setPosition(412 + 15, 600 - 77 + 10);
+
+
 	srand(67656521);
 	
 	tile tiles[32][32] = {none};//16 pix for 1 tile 512x512 area
@@ -125,13 +172,21 @@ int main()
 				else if (tile_now == tile::block) {
 					tile_draw.setFillColor(sf::Color(35, 37, 40));
 				}
+				else if (tile_now == tile::god_apple) {
+					tile_draw.setFillColor(sf::Color(253, 233, 16));
+				}
+				else if (tile_now == tile::devil_apple) {
+					tile_draw.setFillColor(sf::Color(199, 0, 0));
+				}
 				tile_draw.setPosition({ j*16.0f, i*16.0f });
 				window.draw(tile_draw);
 			}
 		}
 		//draw 1 snake
+
 		tile_draw.setFillColor(sf::Color(46, 176, 253));
 		tile_draw.setPosition({ snake.head.first*16.0f, snake.head.second*16.0f });
+		if(snake.tail.size()!=0)
 		window.draw(tile_draw);
 		for (auto coord : snake.tail) {
 			tile_draw.setFillColor(sf::Color(46, 176, 253));
@@ -141,6 +196,7 @@ int main()
 		//draw 2 snake
 		tile_draw.setFillColor(sf::Color(42, 42, 114));
 		tile_draw.setPosition({ snake2.head.first*16.0f, snake2.head.second*16.0f });
+		if (snake2.tail.size() != 0)
 		window.draw(tile_draw);
 		for (auto coord : snake2.tail) {
 			tile_draw.setFillColor(sf::Color(42, 42, 114));
@@ -163,12 +219,25 @@ int main()
 				snake.move();
 				tiles[snake.head.second][snake.head.first] = none;
 				snake.tail.push_back(snake.tail[snake.tail.size() - 1]);
-				if(snake.tail.size()==14)
-					std::vector<std::pair<int,int>>(snake.tail.begin(), snake.tail.begin() + 4).swap(snake.tail);
+				if (snake.tail.size() == 14) {
+					std::vector<std::pair<int, int>>(snake.tail.begin(), snake.tail.begin() + 4).swap(snake.tail);
+					player1score += 10;
+				}
 				countApplesMap--;
-
 				if(countApplesMap<=20)
 					generateApple(tiles);
+				break;
+			case tile::god_apple:
+				snake.move();
+				tiles[snake.head.second][snake.head.first] = none;
+				player1score += 5;
+				generateApple(tiles);
+				break;
+			case tile::devil_apple:
+				snake.move();
+				tiles[snake.head.second][snake.head.first] = none;
+				player1score = std::max(0, player1score-10);
+				generateApple(tiles);
 				break;
 			default:
 				break;
@@ -184,19 +253,65 @@ int main()
 				snake2.move();
 				tiles[snake2.head.second][snake2.head.first] = none;
 				snake2.tail.push_back(snake2.tail[snake2.tail.size() - 1]);
-				if (snake2.tail.size() == 14)
+				if (snake2.tail.size() == 14){
 					std::vector<std::pair<int, int>>(snake2.tail.begin(), snake2.tail.begin() + 4).swap(snake2.tail);
+					player2score += 10;
+				}
 				countApplesMap--;
 				if (countApplesMap <= 20)
 					generateApple(tiles);
 				break;
+			case tile::god_apple:
+				snake2.move();
+				tiles[snake2.head.second][snake2.head.first] = none;
+				player2score += 5;
+				generateApple(tiles);
+				break;
+			case tile::devil_apple:
+				snake2.move();
+				tiles[snake2.head.second][snake2.head.first] = none;
+				player2score = std::max(0, player2score - 10);
+				generateApple(tiles);
+				break;
 			default:
 				break;
+			}
+			text.setString("player1: " + std::to_string(player1score));
+			text2.setString("player2: " + std::to_string(player2score));
+
+			goal = 100;
+			if (player1score >= goal) {
+				for (int j = 0; j < 32; j++) {
+					for (int i = 0; i < 32; i++) {
+						if(tiles[j][i]!=tile::block)
+						tiles[j][i] = tile::snake;
+					}
+				}
+				snake.tail.clear();
+				snake2.tail.clear();
+			}
+			else if (player2score >= goal) {
+				for (int j = 0; j < 32; j++) {
+					for (int i = 0; i < 32; i++) {
+						if (tiles[j][i] != tile::block)
+							tiles[j][i] = tile::snake2;
+					}
+				}
+				snake.tail.clear();
+				snake2.tail.clear();
 			}
 
 			clock.restart();
 			elapsed = 0;
 		}
+
+		
+		window.draw(image);
+
+		window.draw(scoreBoardBackground);
+		window.draw(text);
+		window.draw(text2);
+		window.draw(text_goal);
 		window.display();
 	}
 	return 0;
